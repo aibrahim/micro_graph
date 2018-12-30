@@ -5,8 +5,8 @@
   (graph-edges [this])
   (graph-add-vertex [this vertex])
   (graph-add-edge [this edge])
-  (graph-adj-mat [this]))
-
+  (graph-adj-mat [this])
+  (graph-bfs [this start]))
 
 (extend-type clojure.lang.IPersistentMap
   IGraph
@@ -22,17 +22,19 @@
   (graph-add-vertex [this vertex]
     (assoc this vertex {}))
   (graph-add-edge [this [src dist w]]
-    (assoc-in this [src dist] w)))
-
-(def g {:frankfurt {:mannheim 85 :wurzburg 217 :kassel 173}
-        :mannheim {:frankfurt 85 :karlsruhe 80}
-        :karlsruhe {:augsburg 250 :mannheim 80}
-        :augsburg {:karlsruhe 250 :munchen 84}
-        :wurzburg {:erfurt 186 :numberg 103 :frankfurt 217}
-        :erfurt {:wurzburg 186}
-        :numberg {:wurzburg 103 :stuttgart 183 :munchen 167}
-        :munchen {:numberg 167 :augsburg 84 :kassel 502}
-        :kassel {:frankfurt 173 :munchen 502}
-        :stuttgart {:numberg 183}})
-
+    (assoc-in this [src dist] w))
+  (graph-bfs [g start]
+    (loop [final [start] q (reduce conj clojure.lang.PersistentQueue/EMPTY (-> g (get start) keys)) visited #{start}]
+      (if (empty? q)
+        final
+        (let [current (-> q seq first)
+              childrens (-> g (get current) keys)
+              visited? (contains? visited current)]
+          (recur (if-not visited?
+                   (conj final current)
+                   final)
+                 (if-not visited?
+                   (reduce conj (pop q) childrens)
+                   (pop q))
+                 (conj visited current)))))))
 
